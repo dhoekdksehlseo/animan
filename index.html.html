@@ -1,0 +1,1340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>🐾 Animal Racing 3D</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+KR:wght@400;700&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#111;overflow:hidden;font-family:'Fredoka One',cursive;}
+canvas{display:block;}
+
+#lobby{position:fixed;inset:0;background:linear-gradient(160deg,#0a1420,#152030,#0c1828);display:flex;flex-direction:column;align-items:center;z-index:100;overflow-y:auto;}
+.ltitle{margin-top:26px;font-size:46px;color:#FFE44D;text-shadow:3px 3px 0 #7a5000;letter-spacing:3px;}
+.lsub{font-size:12px;color:#3a5060;font-family:'Noto Sans KR';margin-top:4px;letter-spacing:2px;}
+.lmain{display:flex;gap:20px;margin-top:16px;width:96%;max-width:1040px;}
+.cpanel{background:rgba(255,255,255,0.04);border:2px solid rgba(255,228,77,0.22);border-radius:13px;padding:16px;width:285px;flex-shrink:0;}
+.ppanel{flex:1;background:rgba(255,255,255,0.04);border:2px solid rgba(100,150,255,0.18);border-radius:13px;padding:16px;display:flex;flex-direction:column;}
+.ptitle{font-size:16px;color:#FFE44D;text-align:center;margin-bottom:10px;}
+.cpreview{width:100%;height:100px;background:rgba(255,255,255,0.03);border:2px dashed rgba(255,255,255,0.09);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:56px;margin-bottom:9px;}
+.cnamedis{text-align:center;font-size:12px;color:#6a7a8a;font-family:'Noto Sans KR';margin-bottom:8px;}
+.cgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:11px;}
+.cbtn{background:rgba(255,255,255,0.05);border:2px solid transparent;border-radius:6px;padding:5px;font-size:21px;cursor:pointer;transition:all 0.1s;text-align:center;}
+.cbtn:hover{border-color:#FFE44D;transform:scale(1.08);}
+.cbtn.sel{border-color:#FFE44D;background:rgba(255,228,77,0.14);}
+.nrow{display:flex;gap:6px;align-items:center;margin-top:4px;}
+.nlabel{font-size:11px;color:#4a6070;font-family:'Noto Sans KR';white-space:nowrap;}
+.ninput{flex:1;background:rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.07);border-radius:6px;padding:7px 10px;color:#fff;font-size:12px;font-family:'Noto Sans KR';outline:none;}
+.ninput:focus{border-color:#FFE44D;}
+.plist{display:flex;flex-direction:column;gap:5px;flex:1;}
+.pslot{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.03);border:2px solid rgba(255,255,255,0.05);border-radius:8px;padding:6px 10px;}
+.pslot.me{border-color:rgba(255,228,77,0.3);}
+.pslot.empty{opacity:0.18;font-family:'Noto Sans KR';font-size:11px;color:#2a4050;}
+.snum{font-size:13px;color:#FFE44D;width:18px;}.semoji{font-size:18px;}
+.sname{flex:1;font-family:'Noto Sans KR';font-size:11px;color:#aabbcc;}
+.stag{font-size:9px;padding:2px 6px;border-radius:4px;font-family:'Noto Sans KR';}
+.tready{background:rgba(0,200,70,0.15);color:#00cc50;border:1px solid rgba(0,200,70,0.2);}
+.tbot{background:rgba(255,255,255,0.04);color:#3a5060;border:1px solid rgba(255,255,255,0.07);}
+.lbottom{display:flex;gap:11px;margin:16px 0;align-items:center;flex-wrap:wrap;justify-content:center;}
+.bbtn{background:rgba(255,255,255,0.05);color:#6a7a8a;border:2px solid rgba(255,255,255,0.09);border-radius:8px;padding:8px 14px;font-size:12px;font-family:'Noto Sans KR';cursor:pointer;transition:all 0.1s;}
+.bbtn:hover{color:#fff;border-color:rgba(255,255,255,0.18);}
+.bstart{background:linear-gradient(135deg,#FFE44D,#FFA800);color:#1a1000;border:none;border-radius:12px;padding:13px 52px;font-size:20px;font-family:'Fredoka One';cursor:pointer;box-shadow:0 5px 0 #7a5000;letter-spacing:2px;transition:all 0.1s;}
+.bstart:hover{transform:translateY(-2px);box-shadow:0 7px 0 #7a5000;}
+.bstart:active{transform:translateY(2px);box-shadow:0 2px 0 #7a5000;}
+.cguide{background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:8px 16px;font-size:10px;font-family:'Noto Sans KR';color:#3a5060;display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:13px;}
+.ci{display:flex;align-items:center;gap:3px;}
+.k{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:3px;padding:1px 5px;font-size:9px;color:#7a8a9a;font-family:monospace;}
+
+#gameUI{display:none;position:fixed;inset:0;pointer-events:none;z-index:10;}
+#lapHud{position:fixed;top:14px;left:14px;background:rgba(0,0,0,0.7);border:2px solid rgba(255,228,77,0.22);border-radius:9px;padding:8px 13px;text-align:center;}
+.llbl{font-size:9px;color:#4a6070;letter-spacing:3px;}.lval{font-size:24px;color:#FFE44D;}
+#speedHud{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);border:2px solid rgba(255,255,255,0.09);border-radius:11px;padding:6px 20px;display:flex;gap:12px;align-items:center;}
+.spd{font-size:28px;color:#fff;}.spdlbl{font-size:10px;color:#4a6070;font-family:'Noto Sans KR';}
+.statbox{background:rgba(255,255,255,0.05);border-radius:6px;padding:3px 10px;font-size:11px;color:#8899aa;font-family:'Noto Sans KR';}
+#rankHud{position:fixed;top:14px;right:14px;background:rgba(0,0,0,0.7);border:2px solid rgba(255,255,255,0.07);border-radius:9px;padding:8px 12px;min-width:150px;}
+.rtitle{font-size:9px;color:#3a5060;letter-spacing:2px;margin-bottom:4px;text-align:center;}
+.rrow{display:flex;gap:5px;align-items:center;font-size:11px;margin-bottom:3px;font-family:'Noto Sans KR';color:#7a8a9a;}
+.rrow.me{color:#FFE44D;}.rpos{color:#FFE44D;width:14px;}
+#driftHud{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:40px;color:#FF4400;text-shadow:0 0 30px #FF4400,3px 3px 0 #000;opacity:0;transition:opacity 0.08s;letter-spacing:7px;font-style:italic;}
+#countdown{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:140px;color:#FFE44D;text-shadow:8px 8px 0 #000;z-index:50;pointer-events:none;opacity:0;}
+#ctrlBar{position:fixed;bottom:14px;left:14px;background:rgba(0,0,0,0.55);border:1px solid rgba(255,255,255,0.05);border-radius:7px;padding:7px 11px;font-size:10px;font-family:'Noto Sans KR';color:#3a5060;line-height:2.1;pointer-events:none;}
+
+#rs{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);backdrop-filter:blur(10px);z-index:200;flex-direction:column;align-items:center;justify-content:center;}
+.restitle{font-size:50px;color:#FFE44D;text-shadow:4px 4px 0 #000;margin-bottom:26px;}
+.podium{display:flex;align-items:flex-end;gap:9px;margin-bottom:34px;}
+.pp{display:flex;flex-direction:column;align-items:center;gap:5px;}
+.pem{font-size:46px;}.pnm{font-size:13px;font-family:'Noto Sans KR';color:#fff;}
+.ptg{font-size:10px;color:#6a7a8a;font-family:'Noto Sans KR';}
+.pb{width:98px;border-radius:7px 7px 0 0;display:flex;align-items:center;justify-content:center;font-size:25px;}
+.p1 .pb{height:106px;background:linear-gradient(135deg,#FFE44D,#FFA800);}
+.p2 .pb{height:74px;background:linear-gradient(135deg,#d0d0d0,#999);}
+.p3 .pb{height:52px;background:linear-gradient(135deg,#cd8050,#9a5020);}
+.bback{background:rgba(255,255,255,0.06);color:#bbc;border:2px solid rgba(255,255,255,0.11);border-radius:10px;padding:11px 42px;font-size:16px;font-family:'Fredoka One';cursor:pointer;transition:all 0.1s;letter-spacing:2px;}
+.bback:hover{background:rgba(255,255,255,0.1);color:#fff;}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="lobby">
+  <div class="ltitle">🐾 Animal Racing 3D</div>
+  <div class="lsub">3바퀴 · 최대 10명 · 승천 물리</div>
+  <div class="lmain">
+    <div class="cpanel">
+      <div class="ptitle">캐릭터 선택</div>
+      <div class="cpreview" id="cprv">🐶</div>
+      <div class="cnamedis" id="cnam">강아지</div>
+      <div class="cgrid" id="cgrid"></div>
+      <div class="nrow"><span class="nlabel">닉네임</span>
+        <input class="ninput" id="pname" placeholder="이름..." maxlength="8" value="플레이어">
+      </div>
+    </div>
+    <div class="ppanel">
+      <div class="ptitle">참가자 목록</div>
+      <div class="plist" id="plist"></div>
+    </div>
+  </div>
+  <div class="lbottom">
+    <button class="bbtn" onclick="addBot()">+ 봇 추가</button>
+    <button class="bbtn" onclick="removeBot()">− 봇 제거</button>
+    <button class="bstart" onclick="startGame()">🚦 레이스 시작</button>
+  </div>
+  <div class="cguide">
+    <div class="ci"><span class="k">WASD</span> 이동</div>
+    <div class="ci"><span class="k">Shift</span> 드리프트/부스트 (최대 3초)</div>
+    <div class="ci"><span class="k">Space</span> 승/하차 · 차 뺏기</div>
+    <div class="ci"><span class="k">좌클릭</span> 왼손잡기</div>
+    <div class="ci"><span class="k">우클릭</span> 오른손잡기</div>
+  </div>
+</div>
+
+<div id="gameUI">
+  <div id="lapHud"><div class="llbl">LAP</div><div class="lval" id="lval">0/3</div></div>
+  <div id="speedHud">
+    <div><div class="spd" id="spd">0</div><div class="spdlbl">km/h</div></div>
+    <div class="statbox" id="statbox">🚗 탑승중</div>
+  </div>
+  <div id="rankHud"><div class="rtitle">순위</div><div id="rlist"></div></div>
+  <div id="driftHud">DRIFT!!</div>
+  <div id="countdown"></div>
+  <div id="ctrlBar">
+    <span class="k">W/S</span> 전진/후진&nbsp;&nbsp;<span class="k">A/D</span> 회전&nbsp;&nbsp;
+    <span class="k">Shift</span> 드리프트&nbsp;&nbsp;<span class="k">Space</span> 승하차/뺏기&nbsp;&nbsp;<span class="k">좌/우클릭</span> 잡기
+  </div>
+</div>
+
+<div id="rs">
+  <div class="restitle">🏆 레이스 종료!</div>
+  <div class="podium" id="podium"></div>
+  <button class="bback" onclick="backToLobby()">로비로 돌아가기</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ═══════════════════════════════════════
+// 상수
+// ═══════════════════════════════════════
+const ANIMALS=[
+  {e:'🐶',n:'강아지'},{e:'🐱',n:'고양이'},{e:'🐸',n:'개구리'},{e:'🐨',n:'코알라'},
+  {e:'🐯',n:'호랑이'},{e:'🦊',n:'여우'},{e:'🐮',n:'소'},{e:'🐷',n:'돼지'},
+  {e:'🐧',n:'펭귄'},{e:'🦁',n:'사자'},{e:'🐻',n:'곰'},{e:'🐼',n:'판다'},
+  {e:'🐰',n:'토끼'},{e:'🐔',n:'닭'},{e:'🦆',n:'오리'},
+];
+const CARCOLS=[0xFF4444,0x4488FF,0x44EE88,0xFFAA00,0xFF44FF,
+               0x00CCCC,0xFF8800,0x88FF00,0xFF0088,0xAA88FF];
+const BNAMES=['왕초보봇','드리프트봇','빠른발봇','느림보봇','미친봇','엉터리봇','초보봇','관종봇'];
+
+// 카트라이더식 고정 카메라 오프셋 (뒤에서 위로 내려다봄)
+// 카메라는 절대 회전 안함 - 항상 이 방향
+const CAM_HEIGHT = 38;
+const CAM_DIST  = 28;   // z축 뒤
+const CAM_LOOK_OFFSET_Y = 2;
+
+// 물리
+const CAR_ACCEL    = 28;
+const CAR_BRAKE    = 18;
+const CAR_MAXSPD   = 18;
+const CAR_FRIC     = 0.80;   // 마찰
+const CAR_TURN     = 2.6;    // 회전속도
+const DRIFT_TURN   = 4.2;
+const DRIFT_SLIP   = 0.52;
+const DRIFT_BOOST_MAX = 3.0; // 드리프트 부스트 최대 3초
+const DRIFT_BOOST_ACCEL = 8; // 부스트 추가 가속
+const WALK_SPD     = 7;
+const WALK_TURN    = 5.5;
+const WALK_DRIFT_T = 8.5;
+const GRAVITY      = 32;
+const BOUNCE_BASE  = 20;
+const BOUNCE_MUL   = 1.1;
+// 트랙
+const TR={cx:0,cz:0,rx:70,rz:46,outer:1.15,inner:0.63};
+
+let selChar=0, lobbyPs=[], G=null;
+
+// ═══════════════════════════════════════
+// LOBBY
+// ═══════════════════════════════════════
+function initLobby(){
+  const gd=document.getElementById('cgrid');gd.innerHTML='';
+  ANIMALS.forEach((a,i)=>{
+    const b=document.createElement('div');
+    b.className='cbtn'+(i===selChar?' sel':'');
+    b.textContent=a.e;b.onclick=()=>selC(i);gd.appendChild(b);
+  });
+  lobbyPs=[{id:0,name:document.getElementById('pname').value||'플레이어',
+    emoji:ANIMALS[selChar].e,isBot:false,isMe:true}];
+  renderPList();
+}
+function selC(i){
+  selChar=i;
+  document.querySelectorAll('.cbtn').forEach((b,j)=>b.classList.toggle('sel',j===i));
+  document.getElementById('cprv').textContent=ANIMALS[i].e;
+  document.getElementById('cnam').textContent=ANIMALS[i].n;
+  if(lobbyPs[0])lobbyPs[0].emoji=ANIMALS[i].e;
+  renderPList();
+}
+function addBot(){
+  if(lobbyPs.length>=10)return;
+  const ri=Math.floor(Math.random()*ANIMALS.length);
+  lobbyPs.push({id:lobbyPs.length,name:BNAMES[Math.floor(Math.random()*BNAMES.length)],
+    emoji:ANIMALS[ri].e,isBot:true,isMe:false});
+  renderPList();
+}
+function removeBot(){
+  for(let i=lobbyPs.length-1;i>=0;i--)if(lobbyPs[i].isBot){lobbyPs.splice(i,1);break;}
+  renderPList();
+}
+function renderPList(){
+  const l=document.getElementById('plist');l.innerHTML='';
+  for(let i=0;i<10;i++){
+    const p=lobbyPs[i];const d=document.createElement('div');
+    if(!p){d.className='pslot empty';d.innerHTML=`<span class="snum">${i+1}</span> 빈 슬롯`;}
+    else{
+      d.className='pslot'+(p.isMe?' me':'');
+      d.innerHTML=`<span class="snum">${i+1}</span><span class="semoji">${p.emoji}</span>
+        <span class="sname">${p.name}${p.isMe?' (나)':''}</span>
+        <span class="stag ${p.isBot?'tbot':'tready'}">${p.isBot?'BOT':'READY'}</span>`;
+    }
+    l.appendChild(d);
+  }
+}
+document.getElementById('pname').addEventListener('input',e=>{
+  if(lobbyPs[0]){lobbyPs[0].name=e.target.value||'플레이어';renderPList();}
+});
+
+// ═══════════════════════════════════════
+// THREE.JS 기초 셋업
+// ═══════════════════════════════════════
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.setClearColor(0x87CEEB);
+
+const scene=new THREE.Scene();
+scene.fog=new THREE.Fog(0x87CEEB,120,360);
+
+// ★ 카트라이더식 고정 카메라 - 절대 회전 안함
+const camera=new THREE.PerspectiveCamera(55,window.innerWidth/window.innerHeight,0.1,500);
+
+window.addEventListener('resize',()=>{
+  renderer.setSize(window.innerWidth,window.innerHeight);
+  camera.aspect=window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+});
+
+const ambient=new THREE.AmbientLight(0xffffff,0.7); scene.add(ambient);
+const sun=new THREE.DirectionalLight(0xfffbe0,1.0);
+sun.position.set(50,80,40); sun.castShadow=true;
+sun.shadow.mapSize.width=2048; sun.shadow.mapSize.height=2048;
+sun.shadow.camera.near=1; sun.shadow.camera.far=400;
+sun.shadow.camera.left=-160; sun.shadow.camera.right=160;
+sun.shadow.camera.top=160; sun.shadow.camera.bottom=-160;
+scene.add(sun);
+const fill=new THREE.DirectionalLight(0xaaccff,0.3);
+fill.position.set(-30,30,-30); scene.add(fill);
+
+// ═══════════════════════════════════════
+// 텍스처
+// ═══════════════════════════════════════
+const _tc={};
+function emojiTex(e,sz=128){
+  const k=e+sz; if(_tc[k])return _tc[k];
+  const c=document.createElement('canvas');c.width=sz;c.height=sz;
+  const x=c.getContext('2d');x.font=`${sz*0.72}px serif`;
+  x.textAlign='center';x.textBaseline='middle';x.fillText(e,sz/2,sz/2);
+  _tc[k]=new THREE.CanvasTexture(c);return _tc[k];
+}
+function nameTex(txt,isMe){
+  const c=document.createElement('canvas');c.width=256;c.height=58;
+  const x=c.getContext('2d');
+  x.fillStyle='rgba(0,0,0,0.72)';x.roundRect(0,0,256,58,9);x.fill();
+  x.font='bold 25px Fredoka One,sans-serif';x.textAlign='center';x.textBaseline='middle';
+  x.fillStyle=isMe?'#FFE44D':'#ffffff';x.fillText(txt,128,29);
+  return new THREE.CanvasTexture(c);
+}
+
+// ═══════════════════════════════════════
+// 씬 오브젝트들
+// ═══════════════════════════════════════
+let worldObjs=[];
+function clearWorld(){worldObjs.forEach(o=>scene.remove(o));worldObjs=[];}
+
+function buildWorld(){
+  // 지면
+  const gnd=new THREE.Mesh(new THREE.PlaneGeometry(800,800),
+    new THREE.MeshLambertMaterial({color:0x4a9940}));
+  gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;addW(gnd);
+  // 타일 패턴
+  for(let i=-8;i<8;i++)for(let j=-8;j<8;j++){
+    if((i+j)%2===0){
+      const t=new THREE.Mesh(new THREE.PlaneGeometry(12,12),
+        new THREE.MeshLambertMaterial({color:0x44913a}));
+      t.rotation.x=-Math.PI/2;t.position.set(i*12+6,0.01,j*12+6);addW(t);
+    }
+  }
+  buildTrack();
+  buildFinish();
+  // 안쪽 나무
+  const TREES=['🌳','🌴','🌵','🌲','🎋'];
+  for(let i=0;i<24;i++){
+    const a=(i/24)*Math.PI*2;
+    const r=TR.rx*TR.inner*0.56;
+    addTree(TR.cx+r*Math.cos(a), TR.cz+r*(TR.rz/TR.rx)*Math.sin(a), TREES[i%5]);
+  }
+  // 바깥 나무
+  for(let i=0;i<18;i++){
+    const a=(i/18)*Math.PI*2;
+    const r=TR.rx*TR.outer*1.1;
+    addTree(TR.cx+r*Math.cos(a), TR.cz+r*(TR.rz/TR.rx)*Math.sin(a), TREES[i%5]);
+  }
+  // 관중
+  const CROWD=['🙌','👏','🤩','🎉','🥳'];
+  for(let i=0;i<16;i++){
+    const a=(i/16)*Math.PI*2;
+    const r=TR.rx*TR.outer*1.07;
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTex(CROWD[i%5],64)}));
+    sp.position.set(TR.cx+r*Math.cos(a),2.5,TR.cz+r*(TR.rz/TR.rx)*Math.sin(a));
+    sp.scale.set(3,3,3);addW(sp);
+  }
+}
+
+function buildTrack(){
+  const N=128;
+  const shape=new THREE.Shape();
+  for(let i=0;i<=N;i++){
+    const a=(i/N)*Math.PI*2;
+    i===0?shape.moveTo(TR.cx+TR.rx*TR.outer*Math.cos(a),TR.cz+TR.rz*TR.outer*Math.sin(a))
+         :shape.lineTo(TR.cx+TR.rx*TR.outer*Math.cos(a),TR.cz+TR.rz*TR.outer*Math.sin(a));
+  }
+  const hole=new THREE.Path();
+  for(let i=0;i<=N;i++){
+    const a=(i/N)*Math.PI*2;
+    i===0?hole.moveTo(TR.cx+TR.rx*TR.inner*Math.cos(a),TR.cz+TR.rz*TR.inner*Math.sin(a))
+         :hole.lineTo(TR.cx+TR.rx*TR.inner*Math.cos(a),TR.cz+TR.rz*TR.inner*Math.sin(a));
+  }
+  shape.holes.push(hole);
+  const road=new THREE.Mesh(new THREE.ShapeGeometry(shape,N),
+    new THREE.MeshLambertMaterial({color:0x4a4a5a}));
+  road.rotation.x=-Math.PI/2;road.position.y=0.02;road.receiveShadow=true;addW(road);
+  // 안쪽 잔디
+  const iShape=new THREE.Shape();
+  for(let i=0;i<=N;i++){
+    const a=(i/N)*Math.PI*2;
+    i===0?iShape.moveTo(TR.cx+TR.rx*TR.inner*Math.cos(a),TR.cz+TR.rz*TR.inner*Math.sin(a))
+         :iShape.lineTo(TR.cx+TR.rx*TR.inner*Math.cos(a),TR.cz+TR.rz*TR.inner*Math.sin(a));
+  }
+  const iGrass=new THREE.Mesh(new THREE.ShapeGeometry(iShape,N),
+    new THREE.MeshLambertMaterial({color:0x3d8a3d}));
+  iGrass.rotation.x=-Math.PI/2;iGrass.position.y=0.03;addW(iGrass);
+  // 중앙 점선
+  const pts=[];
+  for(let i=0;i<=N;i++){
+    const a=(i/N)*Math.PI*2;
+    pts.push(new THREE.Vector3(TR.cx+TR.rx*Math.cos(a),0.07,TR.cz+TR.rz*Math.sin(a)));
+  }
+  addW(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({color:0xffffaa,transparent:true,opacity:0.35})));
+  // 가드레일 (빨/흰 교차)
+  for(let i=0;i<72;i++){
+    const a=(i/72)*Math.PI*2;
+    const col=i%4<2?0xff2222:0xeeeeee;
+    const pm=new THREE.MeshLambertMaterial({color:col});
+    [TR.outer*1.002,TR.inner*0.998].forEach(s=>{
+      const post=new THREE.Mesh(new THREE.CylinderGeometry(0.11,0.11,1.5,6),pm);
+      post.position.set(TR.cx+TR.rx*s*Math.cos(a),0.75,TR.cz+TR.rz*s*Math.sin(a));
+      post.castShadow=true;addW(post);
+    });
+  }
+}
+
+function buildFinish(){
+  const fx=TR.cx, fz=TR.cz-TR.rz;
+  // 체크무늬
+  const c2=document.createElement('canvas');c2.width=256;c2.height=32;
+  const x2=c2.getContext('2d');
+  for(let i=0;i<16;i++)for(let j=0;j<2;j++){
+    x2.fillStyle=(i+j)%2===0?'#fff':'#000';x2.fillRect(i*16,j*16,16,16);
+  }
+  const fw=(TR.outer-TR.inner)*TR.rx+3;
+  const fm=new THREE.Mesh(new THREE.BoxGeometry(fw,0.1,2.8),
+    new THREE.MeshLambertMaterial({map:new THREE.CanvasTexture(c2)}));
+  fm.position.set(fx,0.07,fz);fm.rotation.y=Math.PI/2;addW(fm);
+  // 기둥
+  [-1,1].forEach(s=>{
+    const col=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.3,7,10),
+      new THREE.MeshLambertMaterial({color:0xeeeeee}));
+    col.position.set(fx+s*(fw/2+1.5),3.5,fz);col.castShadow=true;addW(col);
+    const flag=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTex('🏁',64)}));
+    flag.position.set(fx+s*(fw/2+1.5),7.5,fz);flag.scale.set(3.5,3.5,3.5);addW(flag);
+  });
+}
+
+function addTree(x,z,e){
+  const trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.25,2,6),
+    new THREE.MeshLambertMaterial({color:0x7a4a1a}));
+  trunk.position.set(x,1,z);trunk.castShadow=true;addW(trunk);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTex(e,96)}));
+  sp.position.set(x,4.5,z);sp.scale.set(5,5,5);addW(sp);
+}
+
+function addW(o){scene.add(o);worldObjs.push(o);return o;}
+
+// ═══════════════════════════════════════
+// 차 메시
+// ═══════════════════════════════════════
+function makeCarMesh(col,emoji,name,isMe){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.BoxGeometry(2.6,0.9,4.4),
+    new THREE.MeshLambertMaterial({color:col}));
+  body.position.y=0.55;body.castShadow=true;g.add(body);
+  const cabin=new THREE.Mesh(new THREE.BoxGeometry(2.0,0.78,2.3),
+    new THREE.MeshLambertMaterial({color:0x88ccff,transparent:true,opacity:0.6}));
+  cabin.position.set(0,1.28,0.1);g.add(cabin);
+  // 앞 유리 (투명)
+  const windshield=new THREE.Mesh(new THREE.BoxGeometry(1.8,0.6,0.1),
+    new THREE.MeshLambertMaterial({color:0xbbddff,transparent:true,opacity:0.5}));
+  windshield.position.set(0,1.15,-1.05);g.add(windshield);
+  // 바퀴
+  const wm=new THREE.MeshLambertMaterial({color:0x1a1a1a});
+  [[-1.35,0.35,-1.6],[1.35,0.35,-1.6],[-1.35,0.35,1.6],[1.35,0.35,1.6]].forEach(([wx,wy,wz],wi)=>{
+    const w=new THREE.Mesh(new THREE.CylinderGeometry(0.44,0.44,0.48,12),wm);
+    w.rotation.z=Math.PI/2;w.position.set(wx,wy,wz);w.castShadow=true;
+    w.name='wheel'+wi;g.add(w);
+  });
+  // 운전자 이모지
+  const drv=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTex(emoji,80),transparent:true}));
+  drv.position.set(0,1.4,0);drv.scale.set(1.9,1.9,1.9);drv.name='drv';g.add(drv);
+  // 이름표
+  const nm=new THREE.Sprite(new THREE.SpriteMaterial({map:nameTex(name,isMe),transparent:true}));
+  nm.position.set(0,3.1,0);nm.scale.set(4.4,1.1,1);nm.name='nm';g.add(nm);
+  return g;
+}
+
+// ═══════════════════════════════════════
+// 워커 메시 (휴먼폴플랫 스타일)
+// ═══════════════════════════════════════
+function makeWalkerMesh(emoji,name,isMe){
+  const g=new THREE.Group();
+  // 몸통 (통통한 타원 구)
+  const body=new THREE.Mesh(new THREE.SphereGeometry(0.5,10,7),
+    new THREE.MeshLambertMaterial({color:0xfff0e0}));
+  body.scale.y=1.2;body.position.y=0.85;body.castShadow=true;body.name='body';g.add(body);
+  // 이모지 얼굴
+  const face=new THREE.Sprite(new THREE.SpriteMaterial({map:emojiTex(emoji,96),transparent:true}));
+  face.position.set(0,1.78,0);face.scale.set(1.75,1.75,1.75);face.name='face';g.add(face);
+  // 팔 (둥근 캡슐 느낌)
+  const armM=new THREE.MeshLambertMaterial({color:0xeeddcc});
+  [-0.68,0.68].forEach((ox,i)=>{
+    const upper=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.1,0.55,8),armM);
+    upper.position.set(ox,0.9,0);upper.rotation.z=ox<0?0.6:-0.6;
+    upper.name='upperArm'+i;g.add(upper);
+    const lower=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.09,0.5,8),armM);
+    lower.position.set(ox<0?ox-0.25:ox+0.25,0.55,0);lower.rotation.z=ox<0?0.9:-0.9;
+    lower.name='lowerArm'+i;g.add(lower);
+    // 손
+    const hand=new THREE.Mesh(new THREE.SphereGeometry(0.13,6,5),armM);
+    hand.position.set(ox<0?ox-0.5:ox+0.5,0.3,0);hand.name='hand'+i;g.add(hand);
+  });
+  // 다리
+  const legM=new THREE.MeshLambertMaterial({color:0xccbbaa});
+  [-0.23,0.23].forEach((ox,i)=>{
+    const upper=new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.12,0.5,8),legM);
+    upper.position.set(ox,0.38,0);upper.name='upperLeg'+i;g.add(upper);
+    const lower=new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.1,0.45,8),legM);
+    lower.position.set(ox,0.0,0.05);lower.name='lowerLeg'+i;g.add(lower);
+    const foot=new THREE.Mesh(new THREE.BoxGeometry(0.22,0.1,0.35),legM);
+    foot.position.set(ox,-0.17,0.08);foot.name='foot'+i;g.add(foot);
+  });
+  // 이름표
+  const nm=new THREE.Sprite(new THREE.SpriteMaterial({map:nameTex(name,isMe),transparent:true}));
+  nm.position.set(0,3.0,0);nm.scale.set(4.2,1.05,1);nm.name='nm';g.add(nm);
+  return g;
+}
+
+// ═══════════════════════════════════════
+// 게임 시작
+// ═══════════════════════════════════════
+async function startGame(){
+  document.getElementById('lobby').style.display='none';
+  document.getElementById('gameUI').style.display='block';
+  // 씬 정리
+  while(scene.children.length)scene.remove(scene.children[0]);
+  scene.add(ambient);scene.add(sun);scene.add(fill);
+  clearWorld();
+  Object.keys(_tc).forEach(k=>delete _tc[k]);
+  buildWorld();
+  initG();
+  await doCountdown();
+  G.run=true;
+  lastT=performance.now();
+  requestAnimationFrame(loop);
+}
+
+// ═══════════════════════════════════════
+// 게임 상태 초기화
+// ═══════════════════════════════════════
+function initG(){
+  G={
+    run:false,done:false,
+    cars:[],        // 차량 오브젝트
+    walkers:[],     // 캐릭터 오브젝트
+    pidx:0,         // 플레이어 인덱스
+    keys:{},mL:false,mR:false,mx:0,my:0,
+    time:0,finOrder:[],
+    camX:0,camZ:0, // 카메라 현재 위치 (보간용)
+    ptcls:[],       // 파티클
+  };
+  const N=lobbyPs.length;
+  lobbyPs.forEach((p,i)=>{
+    // 시작 위치: 트랙 위 균등 배치
+    const a=(i/N)*Math.PI*2-Math.PI/2;
+    const sx=TR.cx+TR.rx*Math.cos(a);
+    const sz=TR.cz+TR.rz*Math.sin(a);
+    const initAng=a+Math.PI/2; // 트랙 접선 방향
+
+    const cm=makeCarMesh(CARCOLS[i%CARCOLS.length],p.emoji,p.name,p.isMe);
+    cm.position.set(sx,0,sz);cm.rotation.y=-initAng;scene.add(cm);
+
+    const wm=makeWalkerMesh(p.emoji,p.name,p.isMe);
+    wm.position.set(sx,0,sz);wm.visible=false;scene.add(wm);
+
+    // 손 라인 (왼손/오른손 각각)
+    const mkLine=()=>{
+      const l=new THREE.Line(new THREE.BufferGeometry(),
+        new THREE.LineBasicMaterial({color:0xFFCC00,linewidth:3}));
+      l.visible=false;scene.add(l);return l;
+    };
+    const hL=mkLine(), hR=mkLine();
+
+    const car={
+      id:i,mesh:cm,
+      x:sx,y:0,z:sz,
+      vx:0,vz:0,vy:0,
+      angle:initAng,speed:0,
+      drifting:false,driftAngle:0,
+      driftBoostT:0,   // 드리프트 누른 시간 (최대 3초)
+      lap:0,cp:new Set(),finished:false,finTime:0,
+      occ:i,           // 탑승자 id (-1=비어있음)
+      ascending:false,ascVy:0,ascRX:0,ascRZ:0,
+      stun:0,
+      grabbers:[],     // 이 차 잡고 있는 워커 id 목록
+    };
+    const walker={
+      id:i,name:p.name,emoji:p.emoji,isBot:p.isBot,isMe:p.isMe,
+      mesh:wm,hL,hR,
+      x:sx,y:0,z:sz,
+      vx:0,vz:0,vy:0,
+      facing:initAng,
+      inCar:true,carId:i,
+      lap:0,cp:new Set(),finished:false,finTime:0,
+      // 휴먼폴플랫 휘청임
+      wobble:0,wobbleV:0,   // 옆으로 휘청거리는 각도
+      tilt:0,tiltV:0,       // 앞뒤 기울기
+      // 드리프트
+      drifting:false,driftAngle:0,driftBoostT:0,
+      ascending:false,ascVy:0,ascRX:0,ascRZ:0,
+      stun:0,
+      grabId_L:null,grabType_L:null, // 왼손이 잡고 있는 대상
+      grabId_R:null,grabType_R:null, // 오른손
+      grabbedBy:[],
+      legPh:0,armPh:0,
+      inp:{fwd:0,turn:0,drift:false},
+      botWp:Math.floor(i*(24/Math.max(N,1))),
+    };
+    G.cars.push(car);
+    G.walkers.push(walker);
+    if(p.isMe)G.pidx=i;
+  });
+  // 카메라 초기값
+  const me=G.walkers[G.pidx];
+  G.camX=me.x; G.camZ=me.z;
+  camera.position.set(me.x, CAM_HEIGHT, me.z+CAM_DIST);
+  camera.lookAt(me.x, 0, me.z);
+}
+
+async function doCountdown(){
+  const el=document.getElementById('countdown');
+  for(const t of['3','2','1','GO!']){
+    el.textContent=t;el.style.opacity='1';
+    el.style.color=t==='GO!'?'#00FF88':'#FFE44D';
+    await sl(t==='GO!'?550:700);el.style.opacity='0';await sl(100);
+  }
+}
+function sl(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ═══════════════════════════════════════
+// 입력
+// ═══════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(!G)return;G.keys[e.code]=true;
+  if(e.code==='Space'){e.preventDefault();doSpace();}
+  if(['ShiftLeft','ShiftRight','KeyW','KeyA','KeyS','KeyD'].includes(e.code))e.preventDefault();
+});
+document.addEventListener('keyup',e=>{if(G)G.keys[e.code]=false;});
+
+document.getElementById('c').addEventListener('mousedown',e=>{
+  if(!G)return;e.preventDefault();
+  if(e.button===0){G.mL=true;doGrab('L');}
+  if(e.button===2){G.mR=true;doGrab('R');}
+});
+document.getElementById('c').addEventListener('mouseup',e=>{
+  if(!G)return;
+  if(e.button===0){G.mL=false;relHand('L');}
+  if(e.button===2){G.mR=false;relHand('R');}
+});
+document.getElementById('c').addEventListener('mousemove',e=>{if(G){G.mx=e.clientX;G.my=e.clientY;}});
+document.getElementById('c').addEventListener('contextmenu',e=>e.preventDefault());
+
+// Space: 승/하차, 또는 차 뺏기
+function doSpace(){
+  const me=G.walkers[G.pidx];
+  if(me.finished||me.ascending)return;
+  if(me.inCar){
+    // 하차
+    const car=G.cars[me.carId];
+    car.occ=-1;
+    me.inCar=false;
+    me.x=car.x; me.z=car.z; me.y=car.y;
+    me.vx=car.vx*0.4; me.vz=car.vz*0.4; me.vy=car.vy;
+    me.mesh.visible=true;
+    relAllGrabs(me);
+  } else {
+    // 가장 가까운 차 탑승 or 뺏기
+    let best=null,bd=10;
+    for(const c of G.cars){
+      const d=Math.hypot(c.x-me.x,c.z-me.z);
+      if(d<bd){bd=d;best=c;}
+    }
+    if(best){
+      // 기존 탑승자 강제 하차
+      if(best.occ!==-1&&best.occ!==me.id){
+        const prev=G.walkers[best.occ];
+        prev.inCar=false;
+        prev.x=best.x+(Math.random()-0.5)*3;
+        prev.z=best.z+(Math.random()-0.5)*3;
+        prev.y=best.y;
+        prev.vx=best.vx*0.3+(Math.random()-0.5)*5;
+        prev.vz=best.vz*0.3+(Math.random()-0.5)*5;
+        prev.vy=3;
+        prev.mesh.visible=true;
+      }
+      best.occ=me.id;
+      me.inCar=true; me.carId=best.id;
+      me.x=best.x; me.z=best.z; me.y=best.y;
+      me.mesh.visible=false;
+      relAllGrabs(me);
+    }
+  }
+}
+
+// 잡기: 주변 차/워커 자동 감지, 왼손/오른손 따로
+function doGrab(side){
+  const me=G.walkers[G.pidx];
+  if(me.inCar)return;
+  const RANGE=18;
+  // 이미 그쪽 손에 뭔가 잡혀있으면 무시
+  if(side==='L'&&me.grabId_L!==null)return;
+  if(side==='R'&&me.grabId_R!==null)return;
+
+  // 왼손이 잡은걸 오른손은 못 잡음 (다른 대상 잡기 가능)
+  const alreadyGrabbed=new Set();
+  if(me.grabId_L!==null)alreadyGrabbed.add(me.grabId_L+':'+me.grabType_L);
+  if(me.grabId_R!==null)alreadyGrabbed.add(me.grabId_R+':'+me.grabType_R);
+
+  let best=null,bestD=RANGE,bestType=null;
+  // 차 탐색
+  for(const c of G.cars){
+    if(alreadyGrabbed.has(c.id+':car'))continue;
+    const d=Math.hypot(c.x-me.x,c.z-me.z);
+    if(d<bestD){bestD=d;best=c;bestType='car';}
+  }
+  // 워커 탐색 (하차 상태)
+  for(const w of G.walkers){
+    if(w.id===me.id||w.inCar)continue;
+    if(alreadyGrabbed.has(w.id+':walker'))continue;
+    const d=Math.hypot(w.x-me.x,w.z-me.z);
+    if(d<bestD){bestD=d;best=w;bestType='walker';}
+  }
+  if(!best)return;
+  if(side==='L'){me.grabId_L=best.id;me.grabType_L=bestType;}
+  else{me.grabId_R=best.id;me.grabType_R=bestType;}
+  if(bestType==='car'){if(!best.grabbers.includes(me.id))best.grabbers.push(me.id);}
+  else{if(!best.grabbedBy.includes(me.id))best.grabbedBy.push(me.id);}
+}
+
+function relHand(side){
+  const me=G.walkers[G.pidx];
+  if(side==='L'&&me.grabId_L!==null){
+    detach(me,'L'); me.grabId_L=null; me.grabType_L=null;
+  } else if(side==='R'&&me.grabId_R!==null){
+    detach(me,'R'); me.grabId_R=null; me.grabType_R=null;
+  }
+}
+function detach(w,side){
+  const id=side==='L'?w.grabId_L:w.grabId_R;
+  const tp=side==='L'?w.grabType_L:w.grabType_R;
+  if(id===null)return;
+  if(tp==='car'){const c=G.cars[id];if(c)c.grabbers=c.grabbers.filter(x=>x!==w.id);}
+  else{const t=G.walkers[id];if(t)t.grabbedBy=t.grabbedBy.filter(x=>x!==w.id);}
+}
+function relAllGrabs(w){
+  detach(w,'L');detach(w,'R');
+  w.grabId_L=null;w.grabType_L=null;
+  w.grabId_R=null;w.grabType_R=null;
+  w.hL.visible=false;w.hR.visible=false;
+}
+
+// ═══════════════════════════════════════
+// 게임 루프
+// ═══════════════════════════════════════
+let lastT=0;
+function loop(ts){
+  if(!G||G.done)return;
+  const dt=Math.min((ts-lastT)/1000,0.05);lastT=ts;
+  if(G.run)update(dt);
+  renderer.render(scene,camera);
+  requestAnimationFrame(loop);
+}
+
+function update(dt){
+  G.time+=dt;
+  collectInput();
+  botAI(dt);
+  G.cars.forEach(c=>{if(!c.finished)simCar(c,dt);});
+  G.walkers.forEach(w=>{
+    if(w.finished)return;
+    if(w.inCar){
+      const c=G.cars[w.carId];
+      w.x=c.x;w.z=c.z;w.y=c.y;
+      w.facing=c.angle;
+      syncLap(w,c);
+    } else {
+      simWalker(w,dt);
+      lapCheck(w);
+    }
+  });
+  applyGrabs(dt);
+  applyGrabSlow();
+  carVsCarCollision();
+  carVsWalkerCollision();
+  updateParticles(dt);
+  updateCam(dt);
+  syncMeshes();
+  updateHUD();
+  checkEnd();
+}
+
+// ═══════════════════════════════════════
+// 입력 수집
+// ═══════════════════════════════════════
+function collectInput(){
+  const me=G.walkers[G.pidx];
+  const k=G.keys;
+  me.inp.fwd=(k['KeyW'])?1:((k['KeyS'])?-0.6:0);
+  me.inp.turn=(k['KeyA'])?-1:((k['KeyD'])?1:0);
+  me.inp.drift=!!(k['ShiftLeft']||k['ShiftRight']);
+}
+
+// ═══════════════════════════════════════
+// 차 물리
+// ═══════════════════════════════════════
+function simCar(car,dt){
+  // 승천
+  if(car.ascending){
+    car.ascVy-=GRAVITY*dt;
+    car.y+=car.ascVy*dt;
+    car.x+=car.vx*dt*0.35; car.z+=car.vz*dt*0.35;
+    car.ascRX+=dt*4; car.ascRZ+=dt*3.2;
+    if(car.y<=0&&car.ascVy<0){
+      car.y=0;car.ascending=false;car.ascVy=0;
+      car.vx*=0.25;car.vz*=0.25;car.speed*=0.25;
+      car.ascRX=0;car.ascRZ=0;
+      spawnLand(car.x,car.z);
+    }
+    boundsCheck(car);return;
+  }
+  // 빈 차
+  if(car.occ===-1){
+    car.vx*=Math.pow(0.88,dt*60);car.vz*=Math.pow(0.88,dt*60);car.speed*=Math.pow(0.88,dt*60);
+    car.x+=car.vx*dt;car.z+=car.vz*dt;
+    boundsCheck(car);return;
+  }
+  const w=G.walkers[car.occ];if(!w)return;
+  const {fwd,turn,drift}=w.inp;
+  car.drifting=drift;
+
+  // 드리프트 부스트 타이머
+  if(drift){
+    car.driftBoostT=Math.min(car.driftBoostT+dt,DRIFT_BOOST_MAX);
+  } else {
+    car.driftBoostT=Math.max(0,car.driftBoostT-dt*2);
+  }
+  const boost=car.driftBoostT>0?DRIFT_BOOST_ACCEL*(car.driftBoostT/DRIFT_BOOST_MAX):0;
+
+  // 회전: 속도에 맞게, 저속도 잘 돌게
+  const spf=0.35+Math.min(Math.abs(car.speed)/CAR_MAXSPD,1)*0.65;
+  if(drift){
+    car.angle+=DRIFT_TURN*turn*spf*dt;
+    car.driftAngle+=DRIFT_TURN*turn*spf*dt*0.55;
+  } else {
+    car.angle+=CAR_TURN*turn*spf*dt;
+    car.driftAngle*=Math.pow(0.12,dt); // 드리프트각 빠르게 해소
+  }
+
+  // 가감속
+  const effAccel=(fwd>0?(CAR_ACCEL+boost):CAR_BRAKE)*fwd;
+  car.speed+=effAccel*dt;
+  car.speed=Math.max(-CAR_MAXSPD*0.5,Math.min(CAR_MAXSPD+(boost*0.4),car.speed));
+  if(fwd===0)car.speed*=Math.pow(CAR_FRIC,dt*60);
+
+  // ★ 실제 이동 방향 = angle + driftAngle*slip
+  // 앞으로 잘 가는 핵심: angle 방향으로 speed만큼 정직하게 이동
+  const moveAng=car.angle+car.driftAngle*DRIFT_SLIP;
+  car.vx=Math.cos(moveAng)*car.speed;
+  car.vz=Math.sin(moveAng)*car.speed;
+  car.x+=car.vx*dt; car.z+=car.vz*dt;
+  boundsCheck(car);
+  lapCheck(car);
+
+  if(drift&&Math.abs(car.speed)>5&&Math.random()<0.3)spawnDust(car.x,0.2,car.z,1.3);
+}
+
+// ═══════════════════════════════════════
+// 워커 물리 (하차 상태) - 휴먼폴플랫 느낌
+// ═══════════════════════════════════════
+function simWalker(w,dt){
+  // 승천
+  if(w.ascending){
+    w.ascVy-=GRAVITY*dt;
+    w.y+=w.ascVy*dt;
+    w.x+=w.vx*dt*0.3; w.z+=w.vz*dt*0.3;
+    w.ascRX+=dt*5; w.ascRZ+=dt*3.5;
+    if(w.y<=0&&w.ascVy<0){
+      w.y=0;w.ascending=false;w.ascVy=0;
+      w.vx*=0.2;w.vz*=0.2;
+      w.ascRX=0;w.ascRZ=0;
+      spawnLand(w.x,w.z);
+    }
+    // 휘청임 유지
+    w.wobble+=w.wobbleV*dt; w.wobbleV*=0.9;
+    return;
+  }
+
+  const k=G.keys;
+  const drift=w.isMe?(k['ShiftLeft']||k['ShiftRight']):w.inp&&w.inp.drift;
+  w.drifting=!!drift;
+
+  // 드리프트 부스트
+  if(drift)w.driftBoostT=Math.min((w.driftBoostT||0)+dt,DRIFT_BOOST_MAX);
+  else w.driftBoostT=Math.max(0,(w.driftBoostT||0)-dt*2);
+  const boost=w.driftBoostT>0?4*(w.driftBoostT/DRIFT_BOOST_MAX):0;
+
+  if(w.isMe&&(w.grabId_L===null&&w.grabId_R===null)){
+    const fwd=(k['KeyW'])?1:((k['KeyS'])?-0.5:0);
+    const turn=(k['KeyA'])?-1:((k['KeyD'])?1:0);
+    const spf=0.4+Math.min(Math.hypot(w.vx,w.vz)/WALK_SPD,1)*0.6;
+    if(drift){
+      w.facing+=WALK_DRIFT_T*turn*spf*dt;
+      w.driftAngle=(w.driftAngle||0)+WALK_DRIFT_T*turn*spf*dt*0.45;
+    } else {
+      w.facing+=WALK_TURN*turn*spf*dt;
+      w.driftAngle=(w.driftAngle||0)*Math.pow(0.1,dt);
+    }
+    const moveAng=w.facing+(w.driftAngle||0)*0.4;
+    const spd=WALK_SPD+boost;
+    if(fwd!==0){w.vx=Math.cos(moveAng)*spd*fwd;w.vz=Math.sin(moveAng)*spd*fwd;}
+    else{w.vx*=Math.pow(0.72,dt*60);w.vz*=Math.pow(0.72,dt*60);}
+
+    // 휴먼폴플랫 휘청임: 방향 변화할 때 흔들림
+    const turnAmt=Math.abs(turn)*spf;
+    w.wobbleV+=turn*turnAmt*8*dt;
+    w.tiltV+=fwd*3*dt;
+  }
+
+  // 물리 적용
+  w.x+=w.vx*dt; w.z+=w.vz*dt;
+
+  // 중력 (공중에 있을 때)
+  if(w.y>0){w.vy-=GRAVITY*dt;w.y+=w.vy*dt;}
+  if(w.y<0){w.y=0;w.vy=0;}
+
+  // 휘청임 감쇠 (스프링)
+  w.wobbleV+=-w.wobble*12*dt; // 복원력
+  w.wobbleV*=Math.pow(0.6,dt*60); // 감쇠
+  w.wobble+=w.wobbleV*dt;
+  w.wobble=Math.max(-0.6,Math.min(0.6,w.wobble));
+  w.tiltV+=-w.tilt*10*dt;w.tiltV*=Math.pow(0.65,dt*60);
+  w.tilt+=w.tiltV*dt;
+  w.tilt=Math.max(-0.5,Math.min(0.5,w.tilt));
+
+  const spd2=Math.hypot(w.vx,w.vz);
+  if(spd2>0.5)w.legPh+=dt*spd2*2.8;
+  if(drift&&spd2>2&&Math.random()<0.3)spawnDust(w.x,0.1,w.z,0.9);
+}
+
+// ═══════════════════════════════════════
+// 잡기 드래그 효과
+// ═══════════════════════════════════════
+function getGrabTarget(w,side){
+  const id=side==='L'?w.grabId_L:w.grabId_R;
+  const tp=side==='L'?w.grabType_L:w.grabType_R;
+  if(id===null)return null;
+  return {obj:tp==='car'?G.cars[id]:G.walkers[id],type:tp};
+}
+function applyGrabs(dt){
+  G.walkers.forEach(w=>{
+    if(w.inCar||w.ascending)return;
+    ['L','R'].forEach(side=>{
+      const tgt=getGrabTarget(w,side);
+      if(!tgt)return;
+      const obj=tgt.obj;
+      if(!obj||(tgt.type==='walker'&&obj.inCar)){
+        side==='L'?(w.grabId_L=null,w.grabType_L=null):(w.grabId_R=null,w.grabType_R=null);
+        return;
+      }
+      const dx=obj.x-w.x,dz=obj.z-w.z;
+      const dist=Math.hypot(dx,dz);
+      const bothHands=w.grabId_L!==null&&w.grabId_R!==null;
+      const str=bothHands?0.92:0.70;
+      if(dist>1.5){w.x+=dx*str*dt*5.5;w.z+=dz*str*dt*5.5;}
+      // 잡힌 대상 감속
+      if(tgt.type==='walker'&&bothHands){obj.vx*=0.82;obj.vz*=0.82;}
+    });
+  });
+}
+function applyGrabSlow(){
+  G.cars.forEach(c=>{
+    if(c.grabbers.length===0)return;
+    const f=c.grabbers.length>=2?0.87:0.93;
+    c.speed*=f;
+  });
+  G.walkers.forEach(w=>{
+    if(w.grabbedBy.length>=2){w.vx*=0.82;w.vz*=0.82;}
+    else if(w.grabbedBy.length===1){w.vx*=0.88;w.vz*=0.88;}
+  });
+}
+
+// ═══════════════════════════════════════
+// 봇 AI
+// ═══════════════════════════════════════
+function botAI(dt){
+  const TOTAL=24;
+  G.walkers.forEach(w=>{
+    if(!w.isBot)return;
+    if(!w.inp)w.inp={fwd:0,turn:0,drift:false};
+    const car=w.inCar?G.cars[w.carId]:null;
+    const rx=car?car.x:w.x, rz=car?car.z:w.z;
+    const ta=(w.botWp/TOTAL)*Math.PI*2-Math.PI/2;
+    const tx=TR.cx+TR.rx*Math.cos(ta), tz=TR.cz+TR.rz*Math.sin(ta);
+    if(Math.hypot(tx-rx,tz-rz)<10)w.botWp=(w.botWp+1)%TOTAL;
+    if(car&&!car.ascending){
+      // 목표 방향과 현재 angle 차이로 회전 결정
+      const td=Math.atan2(tx-car.x,tz-car.z); // NOTE: x,z 기반 atan2
+      // car.angle과 비교 (car.angle은 atan2(vx,vz) 기반)
+      const carFwd=Math.atan2(car.vx||0.001,car.vz||0.001);
+      let ad=td-carFwd;
+      while(ad>Math.PI)ad-=Math.PI*2;while(ad<-Math.PI)ad+=Math.PI*2;
+      w.inp.fwd=1;
+      w.inp.turn=ad<-0.08?-1:(ad>0.08?1:0);
+      w.inp.drift=Math.abs(ad)>0.7&&car.speed>9;
+    } else if(!car&&!w.ascending){
+      const dx2=tx-w.x,dz2=tz-w.z,dl=Math.hypot(dx2,dz2);
+      if(dl>0){w.vx=(dx2/dl)*WALK_SPD*0.65;w.vz=(dz2/dl)*WALK_SPD*0.65;}
+      const td2=Math.atan2(dx2,dz2);
+      w.facing=td2;
+      // 봇 가끔 하차/탑승
+      if(Math.random()<0.001){
+        // 근처 빈 차 탑승 시도
+        for(const c of G.cars){
+          if(c.occ!==-1)continue;
+          const d=Math.hypot(c.x-w.x,c.z-w.z);
+          if(d<10){c.occ=w.id;w.inCar=true;w.carId=c.id;w.mesh.visible=false;break;}
+        }
+      }
+    }
+  });
+  // 봇 랜덤 하차
+  G.walkers.forEach(w=>{
+    if(!w.isBot||!w.inCar)return;
+    if(Math.random()<0.0003){
+      const car=G.cars[w.carId];car.occ=-1;
+      w.inCar=false;w.x=car.x;w.z=car.z;w.y=0;
+      w.vx=car.vx*0.3;w.vz=car.vz*0.3;w.mesh.visible=true;
+    }
+  });
+}
+
+// ═══════════════════════════════════════
+// 경계
+// ═══════════════════════════════════════
+function boundsCheck(e){
+  const dx=e.x-TR.cx,dz=e.z-TR.cz;
+  const oA=TR.rx*TR.outer,oB=TR.rz*TR.outer;
+  const iA=TR.rx*TR.inner,iB=TR.rz*TR.inner;
+  const od=(dx*dx)/(oA*oA)+(dz*dz)/(oB*oB);
+  if(od>1){
+    const n=Math.hypot(dx/oA,dz/oB);
+    const nx=(dx/oA)/n,nz=(dz/oB)/n;
+    e.x=TR.cx+nx*oA*0.986;e.z=TR.cz+nz*oB*0.986;
+    const dot=(e.vx||0)*nx+(e.vz||0)*nz;
+    e.vx=(e.vx||0)-2*dot*nx*0.5;e.vz=(e.vz||0)-2*dot*nz*0.5;
+    if(e.speed!==undefined)e.speed*=0.35;
+  }
+  const id2=(dx*dx)/(iA*iA)+(dz*dz)/(iB*iB);
+  if(id2<1){
+    const n=Math.hypot(dx/iA,dz/iB);
+    const nx=(dx/iA)/n,nz=(dz/iB)/n;
+    e.x=TR.cx+nx*iA*1.014;e.z=TR.cz+nz*iB*1.014;
+    const dot=(e.vx||0)*nx+(e.vz||0)*nz;
+    e.vx=(e.vx||0)-2*dot*nx*0.5;e.vz=(e.vz||0)-2*dot*nz*0.5;
+    if(e.speed!==undefined)e.speed*=0.35;
+  }
+}
+
+// ═══════════════════════════════════════
+// 랩 체크
+// ═══════════════════════════════════════
+const NCP=8;
+function lapCheck(ent){
+  if(ent.finished||ent.ascending)return;
+  const dx=ent.x-TR.cx,dz=ent.z-TR.cz;
+  const ang=Math.atan2(dz/TR.rz,dx/TR.rx);
+  const seg=Math.floor(((ang+Math.PI)/(Math.PI*2))*NCP)%NCP;
+  ent.cp.add(seg);
+  if(Math.abs(ang+Math.PI/2)<0.16&&ent.cp.size>=NCP*0.7){
+    ent.lap++;ent.cp=new Set();
+    if(ent.lap>=3&&!ent.finished){
+      ent.finished=true;ent.finTime=G.time;G.finOrder.push(ent.id);
+    }
+  }
+}
+function syncLap(w,car){
+  w.lap=car.lap;w.cp=car.cp;
+  if(car.finished&&!w.finished){
+    w.finished=true;w.finTime=car.finTime;
+    if(!G.finOrder.includes(w.id))G.finOrder.push(w.id);
+  }
+}
+
+// ═══════════════════════════════════════
+// B급 충돌 - 승천!
+// ═══════════════════════════════════════
+function carVsCarCollision(){
+  for(let i=0;i<G.cars.length;i++){
+    for(let j=i+1;j<G.cars.length;j++){
+      const a=G.cars[i],b=G.cars[j];
+      if(a.ascending||b.ascending)continue;
+      const dist=Math.hypot(a.x-b.x,a.z-b.z);
+      if(dist<3.8){
+        const nx=(b.x-a.x)/(dist||1),nz=(b.z-a.z)/(dist||1);
+        const impact=Math.abs(a.speed-b.speed);
+        if(impact>2){
+          const aWins=a.speed>b.speed;
+          const v=aWins?b:a,h=aWins?a:b;
+          const sign=aWins?1:-1;
+          const fly=BOUNCE_BASE+impact*BOUNCE_MUL;
+          v.ascending=true;
+          v.ascVy=fly*(0.75+Math.random()*0.5);
+          v.vx=nx*sign*fly*0.5+(Math.random()-0.5)*fly*0.25;
+          v.vz=nz*sign*fly*0.5+(Math.random()-0.5)*fly*0.25;
+          v.ascRX=(Math.random()-0.5)*10;v.ascRZ=(Math.random()-0.5)*10;
+          // 탑승자 승천 연동
+          if(v.occ!==-1){
+            const vw=G.walkers[v.occ];
+            if(vw){vw.ascending=true;vw.ascVy=v.ascVy*0.85;
+              vw.vx=v.vx;vw.vz=v.vz;vw.ascRX=v.ascRX;vw.ascRZ=v.ascRZ;}
+          }
+          h.speed*=0.55;h.vx-=nx*sign*fly*0.15;h.vz-=nz*sign*fly*0.15;
+          spawnHitFX(v.x,v.z,impact);
+        } else {
+          const sep=(3.9-dist)*0.5;
+          a.x-=nx*sep;a.z-=nz*sep;b.x+=nx*sep;b.z+=nz*sep;
+          const tmp=a.speed;a.speed=b.speed*0.55;b.speed=tmp*0.55;
+        }
+      }
+    }
+  }
+}
+function carVsWalkerCollision(){
+  G.walkers.forEach(w=>{
+    if(w.inCar||w.ascending)return;
+    G.cars.forEach(c=>{
+      if(c.occ===w.id||c.ascending)return;
+      const dist=Math.hypot(c.x-w.x,c.z-w.z);
+      if(dist<3.0&&Math.abs(c.speed)>3){
+        const fly=BOUNCE_BASE*0.75+Math.abs(c.speed)*0.8;
+        const nx2=(w.x-c.x)/(dist||1),nz2=(w.z-c.z)/(dist||1);
+        w.ascending=true;w.ascVy=fly*(0.8+Math.random()*0.4);
+        w.vx=nx2*fly*0.45+(Math.random()-0.5)*fly*0.2;
+        w.vz=nz2*fly*0.45+(Math.random()-0.5)*fly*0.2;
+        w.ascRX=(Math.random()-0.5)*12;w.ascRZ=(Math.random()-0.5)*8;
+        w.wobbleV+=10*(Math.random()-0.5);
+        spawnHitFX(w.x,w.z,Math.abs(c.speed)*0.5);
+      }
+    });
+  });
+}
+
+// ═══════════════════════════════════════
+// 파티클
+// ═══════════════════════════════════════
+function spawnHitFX(x,z,force){
+  const cnt=10+Math.floor(force*0.8);
+  for(let i=0;i<cnt;i++){
+    const a=Math.random()*Math.PI*2;
+    const s=3+Math.random()*force*0.25;
+    const sz=0.25+Math.random()*0.35;
+    const m=new THREE.Mesh(i%3===0?new THREE.OctahedronGeometry(sz):new THREE.SphereGeometry(sz,4,3),
+      new THREE.MeshBasicMaterial({color:[0xFFE600,0xFF4400,0xFF0000,0xffffff,0xFFAA00][i%5],transparent:true}));
+    m.position.set(x,0.4,z);scene.add(m);
+    G.ptcls.push({mesh:m,vx:Math.cos(a)*s,vy:4+Math.random()*force*0.3,vz:Math.sin(a)*s,
+      life:0.5+Math.random()*0.5,maxL:1});
+  }
+}
+function spawnDust(x,y,z,sc){
+  for(let i=0;i<2;i++){
+    const m=new THREE.Mesh(new THREE.SphereGeometry(0.22*sc,4,3),
+      new THREE.MeshBasicMaterial({color:0xaaaaaa,transparent:true}));
+    m.position.set(x+(Math.random()-0.5),y,z+(Math.random()-0.5));scene.add(m);
+    G.ptcls.push({mesh:m,vx:(Math.random()-0.5)*1.5,vy:0.8+Math.random(),vz:(Math.random()-0.5)*1.5,
+      life:0.4+Math.random()*0.2,maxL:0.6});
+  }
+}
+function spawnLand(x,z){
+  for(let i=0;i<8;i++){
+    const a=Math.random()*Math.PI*2;
+    const m=new THREE.Mesh(new THREE.SphereGeometry(0.18,4,3),
+      new THREE.MeshBasicMaterial({color:0xddcc88,transparent:true}));
+    m.position.set(x,0.3,z);scene.add(m);
+    G.ptcls.push({mesh:m,vx:Math.cos(a)*2.5,vy:1.5+Math.random()*2,vz:Math.sin(a)*2.5,
+      life:0.45+Math.random()*0.25,maxL:0.7});
+  }
+}
+function updateParticles(dt){
+  G.ptcls=G.ptcls.filter(p=>{
+    p.vy-=GRAVITY*0.55*dt;p.vx*=0.97;p.vz*=0.97;p.life-=dt;
+    p.mesh.position.x+=p.vx*dt;p.mesh.position.y+=p.vy*dt;p.mesh.position.z+=p.vz*dt;
+    if(p.mesh.position.y<0){p.mesh.position.y=0;p.vy*=-0.25;}
+    p.mesh.material.opacity=Math.max(0,p.life/p.maxL);
+    p.mesh.rotation.x+=dt*3;p.mesh.rotation.z+=dt*2;
+    if(p.life<=0)scene.remove(p.mesh);
+    return p.life>0;
+  });
+}
+
+// ═══════════════════════════════════════
+// ★ 카트라이더식 카메라 - 고정 각도, X축만 따라감
+// 플레이어 위치를 바라보되 카메라 자체는 절대 회전 안함
+// ═══════════════════════════════════════
+function updateCam(dt){
+  const me=G.walkers[G.pidx];
+  // 타겟: 플레이어 x,z
+  G.camX+=(me.x-G.camX)*0.1;
+  G.camZ+=(me.z-G.camZ)*0.1;
+  // 카메라는 고정 오프셋 (뒤+위)
+  // 카트라이더처럼: 항상 같은 방향에서 내려다봄
+  const extraY=me.ascending?Math.max(0,me.y*0.5):0;
+  camera.position.set(G.camX, CAM_HEIGHT+extraY, G.camZ+CAM_DIST);
+  camera.lookAt(G.camX, CAM_LOOK_OFFSET_Y, G.camZ);
+}
+
+// ═══════════════════════════════════════
+// 메시 동기화
+// ═══════════════════════════════════════
+function syncMeshes(){
+  G.cars.forEach(car=>{
+    const m=car.mesh;
+    m.position.set(car.x,car.y,car.z);
+    // 차 방향: angle 방향 (cos=x, sin=z 기준이므로 -atan2(vx,vz))
+    m.rotation.y=-car.angle;
+    // 드리프트 기울기
+    const targetZ=car.drifting?car.driftAngle*0.22:0;
+    m.rotation.z+=(targetZ-m.rotation.z)*0.15;
+    // 승천 회전
+    if(car.ascending){m.rotation.x=car.ascRX;m.rotation.z+=car.ascRZ*0.05;}
+    else{m.rotation.x*=0.8;}
+    // 바퀴 회전
+    for(let wi=0;wi<4;wi++){
+      const wh=m.getObjectByName('wheel'+wi);
+      if(wh)wh.rotation.y+=car.speed*0.06;
+    }
+    const drv=m.getObjectByName('drv');
+    if(drv)drv.visible=car.occ!==-1;
+    const nm2=m.getObjectByName('nm');
+    if(nm2)nm2.visible=car.occ!==-1;
+  });
+
+  G.walkers.forEach(w=>{
+    if(w.inCar){w.mesh.visible=false;return;}
+    w.mesh.visible=true;
+    const m=w.mesh;
+    m.position.set(w.x,w.y,w.z);
+    m.rotation.y=-w.facing+Math.PI;
+    // 휴먼폴플랫 휘청임: wobble=좌우, tilt=앞뒤
+    m.rotation.z=w.wobble;
+    m.rotation.x=w.tilt*0.5;
+    // 승천 중엔 빙글빙글
+    if(w.ascending){m.rotation.x=w.ascRX;m.rotation.z=w.ascRZ;}
+
+    // 다리 애니메이션
+    const spd=Math.hypot(w.vx,w.vz);
+    const moving=spd>0.5;
+    [0,1].forEach(i=>{
+      const ul=m.getObjectByName('upperLeg'+i);
+      const ll=m.getObjectByName('lowerLeg'+i);
+      const ft=m.getObjectByName('foot'+i);
+      if(ul){const ph=w.legPh+(i%2)*Math.PI;ul.rotation.x=Math.sin(ph)*0.5*(moving?1:0);}
+      if(ll){const ph=w.legPh+(i%2)*Math.PI;ll.rotation.x=Math.max(0,Math.sin(ph)*0.4)*(moving?1:0);}
+      if(ft){const ph=w.legPh+(i%2)*Math.PI;ft.rotation.x=Math.sin(ph)*0.2*(moving?1:0);}
+    });
+    // 팔 흔들기
+    [0,1].forEach(i=>{
+      const ua=m.getObjectByName('upperArm'+i);
+      const la=m.getObjectByName('lowerArm'+i);
+      if(ua){const ph=w.legPh+(i%2===0?Math.PI:0);ua.rotation.x=Math.sin(ph)*0.45*(moving?1:0);}
+      if(la){const ph=w.legPh+(i%2===0?Math.PI:0);la.rotation.x=Math.sin(ph)*0.3*(moving?1:0);}
+    });
+    // 몸통 bobbing
+    const body=m.getObjectByName('body');
+    if(body)body.position.y=0.85+Math.sin(w.legPh*2)*0.06*(moving?1:0);
+
+    // 잡힌 표시 (얼굴 표정)
+    const face=m.getObjectByName('face');
+    if(face){
+      if(w.grabbedBy.length>0)face.material.map=emojiTex('😱',96);
+      else if(w.ascending)face.material.map=emojiTex('😨',96);
+      else face.material.map=emojiTex(w.emoji,96);
+      face.material.needsUpdate=true;
+    }
+
+    // 손 라인 업데이트
+    syncHandLine(w,'L',w.hL);
+    syncHandLine(w,'R',w.hR);
+  });
+}
+
+function syncHandLine(w,side,line){
+  const id=side==='L'?w.grabId_L:w.grabId_R;
+  const tp=side==='L'?w.grabType_L:w.grabType_R;
+  if(id===null){line.visible=false;return;}
+  const tgt=tp==='car'?G.cars[id]:G.walkers[id];
+  if(!tgt){line.visible=false;return;}
+  line.visible=true;
+  const ox=side==='L'?-0.55:0.55;
+  const start=new THREE.Vector3(w.x+ox,1.0,w.z);
+  const end=new THREE.Vector3(tgt.x,tp==='car'?1.2:1.0,tgt.z);
+  line.geometry.setFromPoints([start,end]);
+  const both=w.grabId_L!==null&&w.grabId_R!==null;
+  line.material.color.setHex(both?0xFF6600:0xFFCC00);
+}
+
+// ═══════════════════════════════════════
+// HUD
+// ═══════════════════════════════════════
+function updateHUD(){
+  const me=G.walkers[G.pidx];
+  let kmh=0;
+  if(me.inCar)kmh=Math.abs(G.cars[me.carId].speed*20)|0;
+  else kmh=(Math.hypot(me.vx,me.vz)*13)|0;
+  document.getElementById('spd').textContent=kmh;
+  const s=me.ascending?'🚀 승천중':me.inCar?'🚗 탑승중':'🚶 도보';
+  document.getElementById('statbox').textContent=s;
+  document.getElementById('lval').textContent=`${me.lap}/3`;
+  const car=me.inCar?G.cars[me.carId]:null;
+  const walkerDrift=!me.inCar&&me.drifting&&Math.hypot(me.vx,me.vz)>2;
+  document.getElementById('driftHud').style.opacity=
+    ((car&&car.drifting&&Math.abs(car.speed)>4)||walkerDrift)?'1':'0';
+  const sorted=[...G.walkers].sort((a,b)=>{
+    if(a.finished!==b.finished)return a.finished?-1:1;
+    return(b.lap*1000+b.cp.size)-(a.lap*1000+a.cp.size);
+  });
+  document.getElementById('rlist').innerHTML=sorted.slice(0,8).map((e,i)=>`
+    <div class="rrow${e.isMe?' me':''}">
+      <span class="rpos">${i+1}</span><span>${e.emoji}</span><span>${e.name}</span>
+      ${e.ascending?'<span style="color:#FF8800;font-size:9px">🚀</span>':''}
+      ${e.finished?'<span style="color:#00dd55;font-size:9px">✓</span>':''}
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+// 결과
+// ═══════════════════════════════════════
+function checkEnd(){
+  const done=G.walkers.filter(w=>w.finished).length;
+  const total=G.walkers.length;
+  if(done>=Math.min(3,total)||done===total||G.time>240){
+    G.done=true;setTimeout(showResult,1000);
+  }
+}
+function showResult(){
+  const fin=G.finOrder.map(id=>G.walkers.find(w=>w.id===id)).filter(Boolean);
+  const notFin=[...G.walkers].filter(w=>!w.finished)
+    .sort((a,b)=>(b.lap*1000+b.cp.size)-(a.lap*1000+a.cp.size));
+  const order=[...fin,...notFin].slice(0,3);
+  const places=[{c:'p2',i:1},{c:'p1',i:0},{c:'p3',i:2}];
+  document.getElementById('podium').innerHTML=places.map(({c,i})=>{
+    const p=order[i];if(!p)return'';
+    return`<div class="pp ${c}">
+      <div class="pem">${p.emoji}</div><div class="pnm">${p.name}</div>
+      <div class="ptg">${p.finished?'완주':p.lap+'랩'}</div>
+      <div class="pb">${['🥇','🥈','🥉'][i]}</div></div>`;
+  }).join('');
+  document.getElementById('rs').style.display='flex';
+  document.getElementById('gameUI').style.display='none';
+}
+function backToLobby(){
+  document.getElementById('rs').style.display='none';
+  document.getElementById('gameUI').style.display='none';
+  document.getElementById('lobby').style.display='flex';
+  if(G){
+    G.ptcls.forEach(p=>scene.remove(p.mesh));
+    G.cars.forEach(c=>scene.remove(c.mesh));
+    G.walkers.forEach(w=>{scene.remove(w.mesh);w.hL&&scene.remove(w.hL);w.hR&&scene.remove(w.hR);});
+    clearWorld();
+  }
+  G=null;initLobby();
+}
+
+// ═══════════════════════════════════════
+// 초기 로비 배경
+// ═══════════════════════════════════════
+function bgLoop(){
+  if(!G){renderer.render(scene,camera);}
+  requestAnimationFrame(bgLoop);
+}
+(function initBg(){
+  renderer.setClearColor(0x0a1828);
+  scene.add(ambient);scene.add(sun);
+  camera.position.set(0,CAM_HEIGHT,CAM_DIST);
+  camera.lookAt(0,0,0);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(10,2.8,8,60),
+    new THREE.MeshLambertMaterial({color:0x1a3050}));
+  scene.add(ring);worldObjs.push(ring);
+  bgLoop();
+})();
+initLobby();
+</script>
+</body>
+</html>
